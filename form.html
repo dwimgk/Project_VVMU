@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: Arial;
+        padding: 20px;
+        max-width: 600px;
+        margin: auto;
+      }
+      label {
+        display: block;
+        margin-top: 15px;
+      }
+      input, textarea, button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Докладна книга</h2>
+    <form id="customForm">
+      <label>Name:</label>
+      <input type="text" name="name" required>
+
+      <label>Feedback:</label>
+      <textarea name="feedback" rows="4" required></textarea>
+
+      <input type="hidden" id="userEmail" name="email" value="<?= email ?>">
+
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="successMsg" style="margin-top:20px; color: green;"></div>
+
+    <script>
+      document.getElementById('customForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = e.target;
+
+        const data = {
+          name: form.name.value,
+          feedback: form.feedback.value,
+          email: form.email.value // hidden field
+        };
+
+        google.script.run.withSuccessHandler(function(response) {
+          document.getElementById('successMsg').innerHTML =
+            `${response.message}<br>
+             <a href="${response.fileUrl}" target="_blank">View File</a>`;
+          form.reset();
+        }).submitForm(data);
+      });
+    </script>
+  </body>
+</html>
