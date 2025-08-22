@@ -1,44 +1,62 @@
 function doGet() {
   const template = HtmlService.createTemplateFromFile('form');
-  template.email = Session.getActiveUser().getEmail(); // Inject user email
+  template.email = Session.getActiveUser().getEmail();
   return template.evaluate()
     .setTitle('Докладна книга')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function submitForm(data) {
-  const templateFileId = '1AAwBIUJsJ9-XpBtQXKW0sTueSmtbEhFLVd_R3DhIn_0'; // Replace with your template file ID
-  const folderId = '1Z-2hr-hHY-VeFHxYkTazqWfSl0ENHMhH'; // Replace with your folder ID
+// TODO
+// tickbox za chas predi start_date i end_date
+// ako putni pari e ticknato - da se poqvqvat dve poleta start_location i end_location, otnovo s dropdown
 
-  // Make a copy of the template in the target folder
+// da se editnat +2 dokumenta, za ako ima tova pole za chas i tova za marshrut :(
+
+function submitForm(data) {
+  const templateFileId = '1da1-21k1CoW4JeXgRGpNHaARGNSKivj7luyfPn6gA18';
+  const folderId = '1Z-2hr-hHY-VeFHXyk7taxqWFSl0NHMhh';
+
   const folder = DriveApp.getFolderById(folderId);
   const copy = DriveApp.getFileById(templateFileId)
-    .makeCopy(`Feedback - ${data.name} - ${new Date().toISOString()}`, folder);
+    .makeCopy(`Командировка - ${data.name} - ${new Date().toISOString()}`, folder);
 
-  // Open the copied document and replace placeholders
   const doc = DocumentApp.openById(copy.getId());
   const body = doc.getBody();
+
+  // Convert type_money array into a comma-separated string
+  const typeMoneyString = Array.isArray(data.type_money) ? data.type_money.join(', ') : data.type_money;
+
   body.replaceText('{{name}}', data.name);
+  body.replaceText('{{city}}', data.city);
+  body.replaceText('{{start_date}}', data.start_date);
+  body.replaceText('{{end_date}}', data.end_date);
+  body.replaceText('{{type_money}}', typeMoneyString);
+  body.replaceText('{{biller}}', data.biller);
   body.replaceText('{{email}}', data.email);
-  body.replaceText('{{feedback}}', data.feedback);
   body.replaceText('{{date}}', new Date().toLocaleString());
+
   doc.saveAndClose();
 
-  // Share with the user
   copy.addViewer(data.email);
 
-  // Convert to PDF and send via email
   const pdfBlob = copy.getAs(MimeType.PDF);
+
+  // Email body with optional comment
+  let emailBody = 'Вашата командировка е подготвена. Вижте прикачения файл.';
+  if (data.comment && data.comment.trim()) {
+    emailBody += '\n\n---\nКоментар:\n' + data.comment.trim();
+  }
+
   MailApp.sendEmail({
     to: data.email,
-    subject: 'Your Feedback Confirmation',
-    body: 'Thank you for your feedback! Please find your submission attached as a PDF.',
+    subject: 'Служебна командировка',
+    body: emailBody,
     attachments: [pdfBlob]
   });
 
   return {
-    message: 'Your response has been recorded and a PDF has been emailed to you!',
+    message: 'Вашата командировка е записана и изпратена по имейл!',
     fileUrl: copy.getUrl()
   };
 }
