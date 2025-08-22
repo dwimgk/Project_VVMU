@@ -3,35 +3,60 @@
   <head>
     <base target="_top">
     <style>
-      body {
-        font-family: Arial;
-        padding: 20px;
-        max-width: 600px;
-        margin: auto;
-      }
-      label {
-        display: block;
-        margin-top: 15px;
-      }
-      input, textarea, button {
-        width: 100%;
-        padding: 10px;
-        margin-top: 5px;
-      }
+      body { font-family: Arial; padding: 20px; max-width: 600px; margin: auto; }
+      label { display: block; margin-top: 15px; }
+      select, input, textarea, button { width: 100%; padding: 10px; margin-top: 5px; }
+      .checkbox-group { margin-top: 5px; }
+      .checkbox-group label { display: inline-block; margin-right: 10px; }
     </style>
   </head>
   <body>
     <h2>Докладна книга</h2>
     <form id="customForm">
-      <label>Name:</label>
-      <input type="text" name="name" required>
 
-      <label>Feedback:</label>
-      <textarea name="feedback" rows="4" required></textarea>
+      <label>Име:</label>
+      <select name="name" required>
+        <option value="">-- Изберете име --</option>
+        <option>Ivan Dimitrov</option>
+        <option>Dimitur Ivanov</option>
+        <option>Damyan Chakarov</option>
+      </select>
 
-      <input type="hidden" id="userEmail" name="email" value="<?= email ?>">
+      <label>Град:</label>
+      <select name="city" required>
+        <option value="">-- Изберете град --</option>
+        <option>Varna</option>
+        <option>Sofiq</option>
+        <option>Burgas</option>
+      </select>
 
-      <button type="submit">Submit</button>
+      <label>Начална дата:</label>
+      <input type="date" name="start_date" required>
+
+      <label>Крайна дата:</label>
+      <input type="date" name="end_date" required>
+
+      <label>Вид пари:</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" name="type_money" value="дневни"> дневни</label>
+        <label><input type="checkbox" name="type_money" value="квартирни"> квартирни</label>
+        <label><input type="checkbox" name="type_money" value="пътни"> пътни</label>
+      </div>
+
+      <label>Платец:</label>
+      <select name="biller" required>
+        <option value="">-- Изберете --</option>
+        <option>VVMU</option>
+        <option>proekt</option>
+        <option>vunshna organizaciq</option>
+      </select>
+
+      <label>Коментар:</label>
+      <textarea name="comment" rows="4" placeholder="Допълнителна информация или коментари..."></textarea>
+
+      <input type="hidden" name="email" value="<?= email ?>">
+
+      <button type="submit">Изпрати</button>
     </form>
 
     <div id="successMsg" style="margin-top:20px; color: green;"></div>
@@ -41,16 +66,27 @@
         e.preventDefault();
         const form = e.target;
 
+        // Collect multiple checkbox values
+        const typeMoneyValues = Array.from(
+          form.querySelectorAll('input[name="type_money"]:checked')
+        ).map(cb => cb.value);
+
         const data = {
           name: form.name.value,
-          feedback: form.feedback.value,
-          email: form.email.value // hidden field
+          city: form.city.value,
+          start_date: form.start_date.value,
+          end_date: form.end_date.value,
+          type_money: typeMoneyValues, // array
+          biller: form.biller.value,
+          comment: form.comment.value,
+          email: form.email.value
         };
 
         google.script.run.withSuccessHandler(function(response) {
-          document.getElementById('successMsg').innerHTML =
-            `${response.message}<br>
-             <a href="${response.fileUrl}" target="_blank">View File</a>`;
+          document.getElementById('successMsg').innerHTML = `
+            ${response.message}<br>
+            <a href="${response.fileUrl}" target="_blank">Преглед на файла</a>
+          `;
           form.reset();
         }).submitForm(data);
       });
